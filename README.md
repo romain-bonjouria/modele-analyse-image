@@ -1,49 +1,112 @@
-# Modèle d'analyse et d'indexation d'images
+# RAG Documents avec ChromaDB + Ollama
 
-Ce projet contient un modèle IA léger pour :
-1. apprendre à partir d'images déjà indexées (classées par dossiers),
-2. construire un index,
-3. retrouver les images les plus proches d'une image requête.
+Ce projet propose une base **RAG (Retrieval Augmented Generation)** en Python, avec :
 
-## Principe
+- **ChromaDB** comme base vectorielle,
+- **Ollama** pour les embeddings + génération LLM,
+- une **interface Streamlit** pour déposer des dossiers/fichiers et poser des questions sur vos documents.
 
-Le pipeline :
-- extraction d'un embedding via `ByteHistogramEmbedder` (histogramme des octets du fichier image),
-- calcul de similarité cosinus,
-- retour Top-K des images les plus proches.
+## Fonctionnalités
 
-> Le modèle est 100% offline et sans dépendances externes, pour fonctionner même en environnement restreint.
+- Indexation d'un dossier local (txt, md, pdf, py, json, csv).
+- Upload de fichiers via interface web.
+- Recherche sémantique Top-K dans ChromaDB.
+- Réponse LLM guidée par le contexte récupéré.
+- Affichage des sources utilisées.
+- Structure mémoire déjà prête pour le **multi-conversations** (à activer ensuite côté UI).
 
-## Structure du dataset
-
-```text
-dataset/
-  chats/
-    chat_1.jpg
-  chiens/
-    chien_1.png
-```
-
-Chaque sous-dossier = une classe.
-
-## Utilisation
+## Option 1 — Installation développeur
 
 ```bash
-PYTHONPATH=src python -m cli \
-  --dataset ./dataset \
-  --query ./dataset/chats/chat_1.jpg \
-  --top-k 5
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-## Fichiers principaux
+Pré-requis Ollama :
 
-- `src/image_index_model.py` : cœur du modèle (embedding + index + recherche)
-- `src/cli.py` : interface CLI
-- `tests/test_image_index_model.py` : tests unitaires
+```bash
+ollama pull llama3.1
+ollama pull nomic-embed-text
+```
 
-## Évolution possible
+Lancer l'interface :
 
-Quand l'environnement permet d'installer des libs IA, vous pourrez remplacer l'embedder par :
-- un CNN pré-entraîné,
-- CLIP,
-- un index FAISS pour très grands volumes.
+```bash
+PYTHONPATH=src streamlit run src/streamlit_app.py
+```
+
+## Option 2 — Installation client avec un `.exe` (Windows)
+
+### Côté équipe technique (une fois pour produire le binaire)
+
+```powershell
+powershell -ExecutionPolicy Bypass -File packaging/build_windows_exe.ps1
+```
+
+Le binaire est généré ici : `dist/RagClientApp.exe`.
+
+### Côté client final
+
+1. Lancer le script d'installation automatique :
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File packaging/install_client.ps1
+   ```
+
+   Ce script gère automatiquement :
+   - installation Ollama si absent,
+   - ajout au `PATH` utilisateur,
+   - téléchargement des modèles requis.
+
+2. (Option manuelle) Charger les modèles (une seule fois) :
+
+   ```powershell
+   ollama pull llama3.1
+   ollama pull nomic-embed-text
+   ```
+
+3. Si besoin, double-cliquer sur `RagClientApp.exe`.
+4. L'application démarre en local et s'ouvre dans le navigateur.
+
+> Pour réduire les erreurs client, utilisez en priorité `packaging/install_client.ps1`.
+
+## CLI (optionnelle)
+
+Indexer un dossier :
+
+```bash
+PYTHONPATH=src python -m rag_cli ingest ./docs
+```
+
+Question/réponse :
+
+```bash
+PYTHONPATH=src python -m rag_cli ask "Quel est le processus d'installation ?"
+```
+
+Lister les sources :
+
+```bash
+PYTHONPATH=src python -m rag_cli sources
+```
+
+## Variables d'environnement
+
+- `CHROMA_PATH` (défaut `./chroma_db`)
+- `CHROMA_COLLECTION` (défaut `documents`)
+- `OLLAMA_EMBED_MODEL` (défaut `nomic-embed-text`)
+- `OLLAMA_CHAT_MODEL` (défaut `llama3.1`)
+
+## Tests
+
+```bash
+PYTHONPATH=src pytest -q
+```
+
+---
+
+### Prochaine étape prévue
+
+La base technique supporte déjà plusieurs conversations via `conversation_id` dans `ConversationMemory`.
+La prochaine évolution sera d'exposer cette capacité dans l'UI (création/sélection d'un thread).

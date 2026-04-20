@@ -48,18 +48,28 @@ Le binaire est généré ici : `dist/RagClientApp.exe`.
 
 ### Côté client final
 
-1. Installer **Ollama** sur le poste client.
-2. Charger les modèles (une seule fois) :
+1. Lancer le script d'installation automatique :
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File packaging/install_client.ps1
+   ```
+
+   Ce script gère automatiquement :
+   - installation Ollama si absent,
+   - ajout au `PATH` utilisateur,
+   - téléchargement des modèles requis.
+
+2. (Option manuelle) Charger les modèles (une seule fois) :
 
    ```powershell
    ollama pull llama3.1
    ollama pull nomic-embed-text
    ```
 
-3. Double-cliquer sur `RagClientApp.exe`.
+3. Si besoin, double-cliquer sur `RagClientApp.exe`.
 4. L'application démarre en local et s'ouvre dans le navigateur.
 
-> Le client n'a donc qu'un exécutable à lancer pour l'application.
+> Pour réduire les erreurs client, utilisez en priorité `packaging/install_client.ps1`.
 
 ## CLI (optionnelle)
 

@@ -4,7 +4,12 @@ import os
 
 import streamlit as st
 
-from rag_service import get_default_rag, ollama_available_models, ollama_healthcheck
+from rag_service import (
+    get_default_rag,
+    ollama_available_models,
+    ollama_ensure_models,
+    ollama_healthcheck,
+)
 
 
 st.set_page_config(page_title="RAG Chroma + Ollama", layout="wide")
@@ -29,6 +34,18 @@ with st.sidebar:
     st.code("1) Installer Ollama\n2) ollama pull llama3.1\n3) ollama pull nomic-embed-text")
     st.caption(f"OLLAMA_CHAT_MODEL={os.getenv('OLLAMA_CHAT_MODEL', 'llama3.1')}")
     st.caption(f"OLLAMA_EMBED_MODEL={os.getenv('OLLAMA_EMBED_MODEL', 'nomic-embed-text')}")
+    if st.button("Préparer automatiquement les modèles"):
+        with st.spinner("Téléchargement des modèles Ollama..."):
+            target_models = [
+                os.getenv("OLLAMA_CHAT_MODEL", "llama3.1"),
+                os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text"),
+            ]
+            done, msg = ollama_ensure_models(target_models)
+            if done:
+                st.success(msg)
+            else:
+                st.error(msg)
+
     models = ollama_available_models()
     if models:
         st.caption("Modèles locaux détectés :")

@@ -248,6 +248,20 @@ def ollama_available_models() -> list[str]:
         return []
 
 
+def ollama_ensure_models(model_names: list[str]) -> tuple[bool, str]:
+    if ollama is None:
+        return False, "Package ollama non installé."
+    try:
+        existing = set(ollama_available_models())
+        for name in model_names:
+            if name in existing:
+                continue
+            ollama.pull(name)
+        return True, "Modèles Ollama prêts."
+    except Exception as exc:  # pragma: no cover - dépend de l'environnement
+        return False, f"Impossible de préparer les modèles Ollama: {exc}"
+
+
 def get_default_rag() -> OllamaChromaRAG:
     return OllamaChromaRAG(
         chroma_path=os.getenv("CHROMA_PATH", "./chroma_db"),
